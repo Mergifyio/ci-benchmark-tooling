@@ -1,0 +1,56 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "ci_benchmark_tooling"
+version = "0.1.0"
+description = "Scripts to benchmark the performance of various CI providers"
+authors = ["Guillaume RISBOURG <guillaume.risbourg@mergify.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "3.11.3"
+httpx = {extras = ["http2"], version = "^0.24.1"}
+daiquiri = "^3.2.1"
+
+[tool.poetry.scripts]
+  launch-build = "ci_benchmark_tooling.launch_build_workflow:main"
+
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.0.270"
+black = "^23.3.0"
+mypy = "^1.3.0"
+poethepoet = "^0.20.0"
+
+[tool.poe]
+include = ["poe.toml"]
+
+[tool.black]
+target-version = ['py311']
+
+[tool.mypy]
+strict = true
+warn_unreachable = true
+files = ["ci_benchmark_tooling"]
+show_error_codes = true
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+select = [
+ "E", "W", "F", "I", "A", "B", "Q",
+ "C4", "T10", "ISC", "ICN", "BLE",
+ "G", "RSE", "TID", "TRY", "PLE", "UP",
+ "RUF", "RET",
+ "DTZ", "ARG", "TCH", "COM",
+]
+
+[tool.ruff.isort]
+force-single-line = true
+force-sort-within-sections = true
+lines-after-imports = 2
+
+[tool.ruff.flake8-tidy-imports]
+ban-relative-imports = "all"

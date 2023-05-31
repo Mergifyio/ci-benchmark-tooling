@@ -1,0 +1,11 @@
+[tool.poe.executor]
+type = "poetry"
+
+[tool.poe.tasks.linters]
+help = "Run linters"
+default_item_type = "cmd"
+sequence = [
+  "ruff check .",
+  "black --check .",
+  "mypy",
+]
