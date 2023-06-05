@@ -1,9 +1,6 @@
 name: Benchmark CPython
 
-permissions: read-all
-
 on:
-  workflow_call:
   workflow_dispatch:
       
 jobs:
@@ -13,30 +10,22 @@ jobs:
         include:
           #- name: "Ubuntu latest - 2 cores"
           #  os: ubuntu-latest-2-cores
-          #  cores: 2
           #- name: "Ubuntu latest - 4 cores"
           #  os: ubuntu-latest-4-cores
-          #  cores: 4
           - name: "Ubuntu latest - 8 cores"
             os: ubuntu-latest-8-cores
-            cores: 8
           #- name: "Ubuntu latest - 16 cores"
           #  os: ubuntu-latest-16-cores
-          #  cores: 16
           #- name: "Ubuntu latest - 32 cores"
           #  os: ubuntu-latest-32-cores
-          #  cores: 32
           #- name: "Ubuntu latest - 64 cores"
           #  os: ubuntu-latest-64-cores
-          #  cores: 64
-    name: "CPython build on ${{ matrix.name }}"
+    name: "CPython - ${{ matrix.name }}"
     runs-on: ${{ matrix.os }}
     env:
       OPENSSL_VER: 1.1.1t
       PYTHONSTRICTEXTENSIONBUILD: 1
     steps:
-      - uses: actions/checkout@v3
-
       - name: Clone CPython
         uses: actions/checkout@v3
         with:
@@ -102,26 +91,19 @@ jobs:
         include:
           - name: "Windows 2022 - 2 cores"
             os: windows-2022
-            cores: 2
           #- name: "Windows latest - 8 cores"
           #  os: windows-latest-8-cores
-          #  cores: 8
           #- name: "Windows latest - 16 cores"
           #  os: windows-latest-16-cores
-          #  cores: 16
           #- name: "Windows latest - 32 cores"
           #  os: windows-latest-32-cores
-          #  cores: 32
           #- name: "Windows latest - 64 cores"
           #  os: windows-latest-64-cores
-          #  cores: 64
-    name: "CPython build - ${{ matrix.name }}"
+    name: "CPython - ${{ matrix.name }} - 32bits"
     runs-on: ${{ matrix.os }}
     env:
       IncludeUwp: 'true'
     steps:
-      - uses: actions/checkout@v3
-
       - name: Clone CPython
         uses: actions/checkout@v3
         with:
@@ -144,26 +126,19 @@ jobs:
         include:
           - name: "Windows 2022 - 2 cores"
             os: windows-2022
-            cores: 2
           #- name: "Windows latest - 8 cores"
           #  os: windows-latest-8-cores
-          #  cores: 8
           #- name: "Windows latest - 16 cores"
           #  os: windows-latest-16-cores
-          #  cores: 16
           #- name: "Windows latest - 32 cores"
           #  os: windows-latest-32-cores
-          #  cores: 32
           #- name: "Windows latest - 64 cores"
           #  os: windows-latest-64-cores
-          #  cores: 64
-    name: "CPython build - ${{ matrix.name }}"
+    name: "CPython - ${{ matrix.name }} - 64bits"
     runs-on: ${{ matrix.os }}
     env:
       IncludeUwp: 'true'
     steps:
-      - uses: actions/checkout@v3
-
       - name: Clone CPython
         uses: actions/checkout@v3
         with:
@@ -192,7 +167,7 @@ jobs:
   #          os: macos-latest-3-cores
   #        #- name: "macOS latest - 32 cores"
   #        #  os: macos-latest-32-cores
-  #  name: "CPython build - ${{ matrix.name }}"
+  #  name: "CPython - ${{ matrix.name }}"
   #  runs-on: ${{ matrix.os }}
   #  env:
   #    HOMEBREW_NO_ANALYTICS: 1
@@ -200,8 +175,6 @@ jobs:
   #    HOMEBREW_NO_INSTALL_CLEANUP: 1
   #    PYTHONSTRICTEXTENSIONBUILD: 1
   #  steps:
-  #    - uses: actions/checkout@v3
-
   #    - name: Clone CPython
   #      uses: actions/checkout@v3
   #      with:

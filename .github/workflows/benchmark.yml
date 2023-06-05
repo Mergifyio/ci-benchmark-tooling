@@ -1,0 +1,49 @@
+name: Launch benchmarks and create report
+
+permissions:
+  actions: write  # Need write for workflow_dispatch event
+  contents: read
+
+on:
+  workflow_dispatch:
+
+jobs:
+  launch-benchmarks-and-make-report:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python 🔧
+        uses: actions/setup-python@v4.6.1
+        with:
+          python-version: 3.11.3
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements-poetry.txt
+          poetry install
+
+      # TODO: Uncomment once testing done
+      #- name: Dispatch workflows
+      #  run: poetry run dispatch-benchmark-workflows
+
+      - name: Create report
+        run: poetry run create-benchmark-report
+
+      - name: Setup Google Auth 🔧
+        uses: "google-github-actions/auth@v1"
+        with:
+          credentials_json: "${{ secrets.GCP_DOCS_CREDENTIAL_JSON }}"
+
+      - name: Upload benchmark file to GCP 🚀
+        uses: google-github-actions/upload-cloud-storage@v1.0.3
+        with:
+          path: ci_benchmark_tooling/benchmark_data.csv
+          destination: ci-benchmark
+          parent: false
+          process_gcloudignore: false
+          resumable: false
+          headers: |-
+            cache-control: no-cache

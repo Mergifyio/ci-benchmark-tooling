@@ -1,31 +1,17 @@
 #!/usr/bin/env python3
 
 import argparse
-import asyncio
 import getpass
 import logging
 import os
 
 import daiquiri
-import httpx
+
+from ci_benchmark_tooling import utils
 
 
 daiquiri.setup(level=logging.INFO)
-
 LOG = daiquiri.getLogger(__name__)
-
-
-class AsyncGithubClient(httpx.AsyncClient):
-    def __init__(self, token: str) -> None:
-        super().__init__(
-            base_url="https://api.github.com",
-            headers={
-                "Accept": "application/vnd.github+json",
-                "X-GitHub-Api-Version": "2022-11-28",
-                "Authorization": f"Bearer {token}",
-            },
-            http2=True,
-        )
 
 
 def get_parser() -> argparse.ArgumentParser:
@@ -68,16 +54,16 @@ def get_parser() -> argparse.ArgumentParser:
     return parser
 
 
-async def do_github_request(
+def do_github_request(
     token: str,
     owner: str,
     repository: str,
     workflow_name: str,
     ref: str,
 ) -> int:
-    client = AsyncGithubClient(token)
+    client = utils.GitHubClient(token)
     # NOTE: Should we allow to specify workflow inputs ?
-    resp = await client.post(
+    resp = client.post(
         f"/repos/{owner}/{repository}/actions/workflows/{workflow_name}/dispatches",
         json={
             "ref": ref,
@@ -120,6 +106,4 @@ def main(argv: list[str] | None = None) -> int:
     else:
         token = getpass.getpass(prompt="GitHub Token: ")
 
-    return asyncio.run(
-        do_github_request(token, owner, repository, args.workflow_name, args.ref),
-    )
+    return do_github_request(token, owner, repository, args.workflow_name, args.ref)
