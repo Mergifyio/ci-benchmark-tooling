@@ -1,0 +1,112 @@
+# Use the latest 2.1 version of CircleCI pipeline process engine.
+# See: https://circleci.com/docs/configuration-reference
+version: 2.1
+
+jobs:
+  #benchmark-cpython-windows:
+  #  parameters:
+  #    resource_class:
+  #      type: string
+  #  machine:
+  #    image: windows-server-2019-vs2019:2022.08.1
+  #  resource_class: << parameters.resource_class >>
+  #  steps:
+  #    - checkout
+  benchmark-cpython-ubuntu:
+    parameters:
+      resource_class:
+        type: string
+    machine:
+      image: ubuntu-2204:2023.04.2
+    resource_class: << parameters.resource_class >>
+    environment:
+      OPENSSL_VER: 1.1.1t
+      PYTHONSTRICTEXTENSIONBUILD: 1
+    steps:
+      - checkout
+      - run:
+          name: Clone CPython
+          command: git clone --depth 1 -b main https://github.com/python/cpython.git CPython
+
+      # Following steps are copy/pasted from CPython's .github/workflows/build.yml
+      # build_ubuntu job, with some paths modified to fit the benchmark behavior.
+      - run:
+          name: Register gcc problem matcher
+          command: echo "::add-matcher::CPython/.github/problem-matchers/gcc.json"
+      - run:
+          name: Install Dependencies
+          command: sudo ./CPython/.github/workflows/posix-deps-apt.sh
+      - run:
+          name: Configure OpenSSL env vars
+          command: |
+            echo "export MULTISSL_DIR=$(pwd)/CPython/multissl" >> $BASH_ENV
+            echo "export OPENSSL_DIR=$(pwd)/CPython/multissl/openssl/${OPENSSL_VER}" >> $BASH_ENV
+            echo "export LD_LIBRARY_PATH=$(pwd)/CPython/multissl/openssl/${OPENSSL_VER}/lib" >> $BASH_ENV
+            source $BASH_ENV
+      - run:
+          name: Install OpenSSL
+          command: python3 CPython/Tools/ssl/multissltests.py --steps=library --base-directory $MULTISSL_DIR --openssl $OPENSSL_VER --system Linux
+      - run:
+          name: Setup directory envs for out-of-tree builds
+          command: |
+            echo "export CPYTHON_RO_SRCDIR=$(realpath -m $(pwd)/../cpython-ro-srcdir)" >> $BASH_ENV
+            echo "export CPYTHON_BUILDDIR=$(realpath -m $(pwd)/../cpython-builddir)" >> $BASH_ENV
+            source $BASH_ENV
+      - run:
+          name: Create directories for read-only out-of-tree builds
+          command: mkdir -p $CPYTHON_RO_SRCDIR $CPYTHON_BUILDDIR
+      - run:
+          name: Bind mount sources read-only
+          command: sudo mount --bind -o ro $(pwd)/CPython $CPYTHON_RO_SRCDIR
+      - run:
+          name: Configure CPython out-of-tree
+          command: |
+            cd $CPYTHON_BUILDDIR
+            ../cpython-ro-srcdir/configure \
+              --with-pydebug \
+              --with-openssl=$OPENSSL_DIR
+      - run:
+          name: Build CPython out-of-tree
+          command: |
+            cd $CPYTHON_BUILDDIR
+            make -j4
+      - run:
+          name: Display build info
+          command: |
+            cd $CPYTHON_BUILDDIR
+            make pythoninfo
+      - run:
+          name: Remount sources writable for tests
+          # some tests write to srcdir, lack of pyc files slows down testing
+          command: sudo mount $CPYTHON_RO_SRCDIR -oremount,rw
+      - run:
+          name: Tests
+          command: |
+            cd $CPYTHON_BUILDDIR
+            xvfb-run -a -e /dev/stdout make buildbottest TESTOPTS="-j4 -uall,-cpu"
+
+  #benchmark-cpython-macos:
+  #  parameters:
+  #    resource_class:
+  #      type: string
+  #  machine:
+  #    image: xcode:14.0.0
+  #  resource_class: << parameters.resource_class >>
+  #  steps:
+  #    - checkout
+
+workflows:
+  Benchmark CPython:
+    jobs:
+      - benchmark-cpython-ubuntu:
+          matrix:
+            parameters:
+              resource_class: [medium, large, xlarge, 2xlarge]
+      #- benchmark-cpython-windows:
+      #    matrix:
+      #      parameters:
+      #        resource_class: [medium, large, xlarge, 2xlarge]
+      #- benchmark-cpython-macos:
+      #    matrix:
+      #      parameters:
+      #        resource_class: [medium, large, xlarge, 2xlarge]
