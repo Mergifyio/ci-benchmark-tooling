@@ -12,7 +12,7 @@ jobs:
   #  resource_class: << parameters.resource_class >>
   #  steps:
   #    - checkout
-  benchmark-cpython-ubuntu:
+  CPython - Ubuntu:
     parameters:
       resource_class:
         type: string
@@ -23,7 +23,6 @@ jobs:
       OPENSSL_VER: 1.1.1t
       PYTHONSTRICTEXTENSIONBUILD: 1
     steps:
-      - checkout
       - run:
           name: Clone CPython
           command: git clone --depth 1 -b main https://github.com/python/cpython.git CPython
@@ -98,10 +97,11 @@ jobs:
 workflows:
   Benchmark CPython:
     jobs:
-      - benchmark-cpython-ubuntu:
+      - CPython - Ubuntu:
           matrix:
             parameters:
-              resource_class: [medium, large, xlarge, 2xlarge]
+              #resource_class: [medium, large, xlarge, 2xlarge]
+              resource_class: [medium, large]
       #- benchmark-cpython-windows:
       #    matrix:
       #      parameters:

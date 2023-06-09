@@ -10,7 +10,7 @@ authors = ["Guillaume RISBOURG <guillaume.risbourg@mergify.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "3.11.3"
+python = ">=3.11,<4.0"
 httpx = {extras = ["http2"], version = "^0.24.1"}
 daiquiri = "^3.2.1"
 pyyaml = "^6.0"

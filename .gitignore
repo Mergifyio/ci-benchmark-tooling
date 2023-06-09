@@ -1,1 +1,2 @@
 *.pyc
+ci_benchmark_tooling/benchmark_data.csv

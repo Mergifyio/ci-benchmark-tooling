@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      CIRCLE_TOKEN: ${{ secrets.CIRCLECI_TOKEN }}
     steps:
       - uses: actions/checkout@v3
 
@@ -25,9 +26,8 @@ jobs:
           pip install -r requirements-poetry.txt
           poetry install
 
-      # TODO: Uncomment once testing done
-      #- name: Dispatch workflows
-      #  run: poetry run dispatch-benchmark-workflows
+      - name: Dispatch workflows
+        run: poetry run dispatch-benchmark-workflows
 
       - name: Create report
         run: poetry run create-benchmark-report

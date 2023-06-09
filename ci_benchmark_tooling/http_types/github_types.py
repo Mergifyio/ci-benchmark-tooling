@@ -1,7 +1,7 @@
 import typing
 
+from ci_benchmark_tooling.http_types import base
 
-ISODateTimeType = typing.NewType("ISODateTimeType", str)
 
 GitHubLogin = typing.NewType("GitHubLogin", str)
 GitHubAccountType = typing.Literal["User", "Organization", "Bot"]
@@ -61,7 +61,7 @@ class GitHubWorkflowRun(typing.TypedDict):
     head_sha: SHAType
     repository: GitHubRepository
     run_attempt: int
-    run_started_at: ISODateTimeType
+    run_started_at: base.ISODateTimeType
 
 
 GitHubJobRunConclusionType = typing.Literal[
@@ -77,8 +77,8 @@ class GitHubJobRunStep(typing.TypedDict):
     status: str
     conclusion: GitHubJobRunConclusionType
     number: int
-    started_at: ISODateTimeType
-    completed_at: ISODateTimeType
+    started_at: base.ISODateTimeType
+    completed_at: base.ISODateTimeType
 
 
 class GitHubJobRun(typing.TypedDict):
@@ -86,8 +86,8 @@ class GitHubJobRun(typing.TypedDict):
     run_id: int
     name: str
     conclusion: GitHubJobRunConclusionType
-    started_at: ISODateTimeType
-    completed_at: ISODateTimeType
+    started_at: base.ISODateTimeType
+    completed_at: base.ISODateTimeType
     steps: list[GitHubJobRunStep]
     labels: list[str]
     runner_name: str

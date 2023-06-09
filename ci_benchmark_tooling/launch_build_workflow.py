@@ -7,7 +7,7 @@ import os
 
 import daiquiri
 
-from ci_benchmark_tooling import utils
+from ci_benchmark_tooling.clients import github as gh_client
 
 
 daiquiri.setup(level=logging.INFO)
@@ -61,7 +61,7 @@ def do_github_request(
     workflow_name: str,
     ref: str,
 ) -> int:
-    client = utils.GitHubClient(token)
+    client = gh_client.GitHubClient(token)
     # NOTE: Should we allow to specify workflow inputs ?
     resp = client.post(
         f"/repos/{owner}/{repository}/actions/workflows/{workflow_name}/dispatches",
