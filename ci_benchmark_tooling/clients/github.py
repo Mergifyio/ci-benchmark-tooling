@@ -271,14 +271,6 @@ class GitHubClient(base.BaseClient):
         resp_wr = self.get(
             f"/repos/{repository_owner}/{repository_name}/actions/runs/{workflow_id}",
         )
-        if resp_wr.status_code != 200:
-            # TODO: Add a retry ?
-            self.logger.warning(
-                "GitHub response error: %s",
-                resp_wr.text,
-                status_code=resp_wr.status_code,
-            )
-            return []
 
         workflow_run = typing.cast(
             github_types.GitHubWorkflowRun,
@@ -287,14 +279,6 @@ class GitHubClient(base.BaseClient):
         # Find the jobs data for the workflow_run
         workflow_run["jobs_url"]
         resp_jobs = self.get(workflow_run["jobs_url"])
-        if resp_jobs.status_code != 200:
-            # TODO: Add a retry ?
-            self.logger.warning(
-                "GitHub response error: %s",
-                resp_wr.text,
-                status_code=resp_wr.status_code,
-            )
-            return []
 
         job_list = typing.cast(github_types.GitHubJobRunList, resp_jobs.json())
         for job in job_list["jobs"]:

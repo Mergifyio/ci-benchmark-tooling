@@ -5,6 +5,7 @@ import typing
 
 import daiquiri
 import httpx
+import tenacity
 
 
 if typing.TYPE_CHECKING:
@@ -48,3 +49,16 @@ class BaseClient(httpx.Client, abc.ABC):
         repository_name: str,
     ) -> list[types.CsvDataLine]:
         ...
+
+    def request(self, *args: typing.Any, **kwargs: typing.Any) -> httpx.Response:
+        for attempt in tenacity.Retrying(
+            reraise=True,
+            retry=tenacity.retry_if_exception_type(
+                (httpx.StreamError, httpx.HTTPError),
+            ),
+            wait=tenacity.wait_exponential(0.2),
+        ):
+            with attempt:
+                resp = super().request(*args, **kwargs)
+
+        return resp

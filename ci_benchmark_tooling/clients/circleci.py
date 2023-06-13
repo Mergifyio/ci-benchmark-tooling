@@ -81,13 +81,6 @@ class CircleCiClient(base.BaseClient):
             time.sleep(2)
 
             resp_pipeline_workflows = self.get(f"/pipeline/{pipeline_id}/workflow")
-            if resp_pipeline_workflows.status_code != 200:
-                self.logger.error(
-                    "CircleCI response error: %s",
-                    resp_pipeline_workflows.text,
-                    status_code=resp_pipeline_workflows.status_code,
-                )
-                continue
 
             if any(not w["id"] for w in resp_pipeline_workflows.json()["items"]):
                 continue
@@ -169,14 +162,6 @@ class CircleCiClient(base.BaseClient):
 
         for workflow_id in workflows_ids:
             resp_wf_jobs = self.get(f"/workflow/{workflow_id}/job")
-            if resp_wf_jobs.status_code != 200:
-                # TODO: Add retry
-                self.logger.warning(
-                    "CircleCI response error: %s",
-                    resp_wf_jobs.text,
-                    status_code=resp_wf_jobs.status_code,
-                )
-                continue
 
             jobs = typing.cast(
                 circleci_types.WorkflowsJobs,
@@ -187,14 +172,6 @@ class CircleCiClient(base.BaseClient):
                 resp_job_details = self.get(
                     f"{BASE_URL_V1_1}/project/github/{repository_owner}/{repository_name}/{job['job_number']}",
                 )
-                if resp_job_details.status_code != 200:
-                    # TODO: Add retry
-                    self.logger.warning(
-                        "CircleCI response error: %s",
-                        resp_job_details.text,
-                        status_code=resp_job_details.status_code,
-                    )
-                    continue
 
                 details = typing.cast(
                     circleci_types.JobDetails,
