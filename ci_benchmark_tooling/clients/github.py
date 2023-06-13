@@ -1,15 +1,16 @@
 import datetime
-import pathlib
+import re
 import time
 import typing
-
-import yaml
 
 from ci_benchmark_tooling import constants
 from ci_benchmark_tooling import types
 from ci_benchmark_tooling import utils
 from ci_benchmark_tooling.clients import base
 from ci_benchmark_tooling.http_types import github_types
+
+
+RE_IMAGE_NAME_CORES = re.compile(r"-\d+-cores$")
 
 
 def get_infos_from_github_job_name(job_name: str) -> types.GitHubJobNameInfos:
@@ -29,6 +30,10 @@ def get_infos_from_github_job_name(job_name: str) -> types.GitHubJobNameInfos:
             3,
         )
 
+    # Remove the trailing `-\d+-cores` from the image name, it
+    # will be redundant
+    runner_os = RE_IMAGE_NAME_CORES.sub("", runner_os)
+
     return types.GitHubJobNameInfos(
         tested_repository,
         runner_os,
@@ -37,44 +42,8 @@ def get_infos_from_github_job_name(job_name: str) -> types.GitHubJobNameInfos:
     )
 
 
-def get_job_dict_from_yaml_data_and_job_name(
-    yaml_data: typing.Any,
-    job_name: str,
-) -> dict[str, typing.Any] | None:
-    """
-    Retrieves the job dictionary, from the yaml data of a workflow file, based on the job
-    name of a github action.
-
-    To do that, we parse all the matrix in the `strategy/matrix/include`
-    of each jobs, and if the job name, in the yaml_data, + the `name` of a matrix
-    equals the `job_name`, in parameter of this function then we return the corresponding job.
-    """
-    for job in yaml_data["jobs"].values():
-        for matrix in job["strategy"]["matrix"]["include"]:
-            if job["name"].replace("${{ matrix.name }}", matrix["name"]) == job_name:
-                return typing.cast(dict[str, typing.Any], job)
-    return {}
-
-
-def get_job_steps_names_from_yaml_job_data(
-    yaml_job_data: dict[str, typing.Any],
-) -> list[str]:
-    """
-    Retrieves the name of each of the steps of a benchmark job of a github
-    action workflow file.
-    The returned list also contains the name of each steps prepended with `Post `
-    to include the cleanup of each of the build steps as time spent benchmarking.
-    """
-    steps_names = []
-    for s in yaml_job_data["steps"]:
-        steps_names.append(s["name"])
-        steps_names.append(f"Post {s['name']}")
-    return steps_names
-
-
 def get_time_spent_per_job_step(
     job_steps: list[github_types.GitHubJobRunStep],
-    build_steps_of_benchmark_job: list[str],
 ) -> dict[str, datetime.timedelta]:
     time_per_step = {}
     for s in job_steps:
@@ -88,7 +57,7 @@ def get_time_spent_per_job_step(
         ) - datetime.datetime.fromisoformat(s["started_at"])
 
         # Group the build steps of the repository we tested
-        if s["name"] in build_steps_of_benchmark_job:
+        if s["name"] not in constants.GITHUB_JOB_STEPS:
             step_name = constants.CSV_BENCHMARKED_APPLICATION_STEP_NAME
         else:
             step_name = s["name"]
@@ -112,9 +81,9 @@ class GitHubClient(base.BaseClient):
             },
             http2=True,
         )
-        self.repository_owner = None
-        self.repository_name = None
-        self.workflows_names_and_ids = None
+        self.repository_owner: str | None = None
+        self.repository_name: str | None = None
+        self.workflows_names_and_ids: dict[str, int] | None = None
 
     ##############################
     ############ WORKFLOW DISPATCH
@@ -224,7 +193,7 @@ class GitHubClient(base.BaseClient):
         # Initiate the dict of workflow names and ids with
         # all the ids set to -1, the ids will be set by the call
         # to the function `self.retrieve_workflows_ids`
-        self.workflows_names_and_ids: dict[str, int] = {
+        self.workflows_names_and_ids = {
             f.yaml_name_section_value: -1 for f in benchmark_files
         }
 
@@ -251,6 +220,11 @@ class GitHubClient(base.BaseClient):
 
     def wait_for_workflows_to_end(self) -> None:
         self.logger.info("Starting workflows polling...")
+
+        if self.workflows_names_and_ids is None:
+            raise RuntimeError(  # noqa
+                "self.workflows_names_and_ids should not be None",
+            )
 
         workflows_names_and_ids = self.workflows_names_and_ids.copy()
         while workflows_names_and_ids:
@@ -288,7 +262,6 @@ class GitHubClient(base.BaseClient):
 
     def _get_workflow_csv_data(
         self,
-        benchmark_files: dict[str, pathlib.Path],
         workflow_id: str,
         repository_owner: str,
         repository_name: str,
@@ -311,11 +284,6 @@ class GitHubClient(base.BaseClient):
             github_types.GitHubWorkflowRun,
             resp_wr.json(),
         )
-        file = benchmark_files[workflow_run["name"]]
-
-        with open(file) as f:
-            yaml_data = yaml.safe_load(f.read())
-
         # Find the jobs data for the workflow_run
         workflow_run["jobs_url"]
         resp_jobs = self.get(workflow_run["jobs_url"])
@@ -332,28 +300,7 @@ class GitHubClient(base.BaseClient):
         for job in job_list["jobs"]:
             # Retrieve all the infos we will put in the CSV from the job name
             job_infos = get_infos_from_github_job_name(job["name"])
-            yaml_job_data = get_job_dict_from_yaml_data_and_job_name(
-                yaml_data,
-                job["name"],
-            )
-
-            if yaml_job_data is None:
-                self.logger.error(
-                    "Could not find job '%s' data in yaml file '%s'",
-                    job["name"],
-                    file.name,
-                )
-                # TODO: Custom exception
-                raise Exception  # noqa
-
-            build_steps_of_benchmark_job = get_job_steps_names_from_yaml_job_data(
-                yaml_job_data,
-            )
-
-            time_per_step = get_time_spent_per_job_step(
-                job["steps"],
-                build_steps_of_benchmark_job,
-            )
+            time_per_step = get_time_spent_per_job_step(job["steps"])
 
             for step_name, time_spent in time_per_step.items():
                 if step_name in constants.GITHUB_JOB_STEPS:
@@ -381,14 +328,11 @@ class GitHubClient(base.BaseClient):
         repository_owner: str,
         repository_name: str,
     ) -> list[types.CsvDataLine]:
-        benchmark_files = utils.get_github_benchmark_file_by_yaml_name_section()
-
         csv_data: list[types.CsvDataLine] = []
 
         for workflow_id in workflows_ids:
             csv_data.extend(
                 self._get_workflow_csv_data(
-                    benchmark_files,
                     workflow_id,
                     repository_owner,
                     repository_name,

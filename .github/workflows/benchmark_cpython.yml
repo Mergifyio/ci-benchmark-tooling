@@ -8,19 +8,19 @@ jobs:
     strategy:
       matrix:
         include:
-          #- name: "Ubuntu latest - 2 cores"
+          #- cores: "2"
           #  os: ubuntu-latest-2-cores
-          #- name: "Ubuntu latest - 4 cores"
+          #- cores: "4"
           #  os: ubuntu-latest-4-cores
-          - name: "Ubuntu latest - 8 cores"
+          - cores: "8"
             os: ubuntu-latest-8-cores
-          #- name: "Ubuntu latest - 16 cores"
+          #- cores: "16"
           #  os: ubuntu-latest-16-cores
-          #- name: "Ubuntu latest - 32 cores"
+          #- cores: "32"
           #  os: ubuntu-latest-32-cores
-          #- name: "Ubuntu latest - 64 cores"
+          #- cores: "64"
           #  os: ubuntu-latest-64-cores
-    name: "CPython - ${{ matrix.name }}"
+    name: "CPython - ${{ matrix.os }} - ${{ matrix.cores}} cores"
     runs-on: ${{ matrix.os }}
     env:
       OPENSSL_VER: 1.1.1t
@@ -89,17 +89,17 @@ jobs:
     strategy:
       matrix:
         include:
-          - name: "Windows 2022 - 2 cores"
+          - cores: "2"
             os: windows-2022
-          #- name: "Windows latest - 8 cores"
-          #  os: windows-latest-8-cores
-          #- name: "Windows latest - 16 cores"
-          #  os: windows-latest-16-cores
-          #- name: "Windows latest - 32 cores"
-          #  os: windows-latest-32-cores
-          #- name: "Windows latest - 64 cores"
-          #  os: windows-latest-64-cores
-    name: "CPython - ${{ matrix.name }} - 32bits"
+          #- cores: "8"
+          #  os: windows-2022-8-cores
+          #- cores: "16"
+          #  os: windows-2022-16-cores
+          #- cores: "32"
+          #  os: windows-2022-32-cores
+          #- cores: "64"
+          #  os: windows-2022-64-cores
+    name: "CPython - ${{ matrix.os }} - ${{ matrix.cores }} cores - x86 build"
     runs-on: ${{ matrix.os }}
     env:
       IncludeUwp: 'true'
@@ -124,17 +124,17 @@ jobs:
     strategy:
       matrix:
         include:
-          - name: "Windows 2022 - 2 cores"
+          - cores: "2"
             os: windows-2022
-          #- name: "Windows latest - 8 cores"
-          #  os: windows-latest-8-cores
-          #- name: "Windows latest - 16 cores"
-          #  os: windows-latest-16-cores
-          #- name: "Windows latest - 32 cores"
-          #  os: windows-latest-32-cores
-          #- name: "Windows latest - 64 cores"
-          #  os: windows-latest-64-cores
-    name: "CPython - ${{ matrix.name }} - 64bits"
+          #- cores: "8"
+          #  os: windows-2022-8-cores
+          #- cores: "16"
+          #  os: windows-2022-16-cores
+          #- cores: "32"
+          #  os: windows-2022-32-cores
+          #- cores: "64"
+          #  os: windows-2022-64-cores
+    name: "CPython - ${{ matrix.os }} - ${{ matrix.cores }} cores - x64 build"
     runs-on: ${{ matrix.os }}
     env:
       IncludeUwp: 'true'
@@ -163,11 +163,11 @@ jobs:
   #  strategy:
   #    matrix:
   #      include:
-  #        - name: "macOS latest - 3 cores"
+  #        - cores: "3"
   #          os: macos-latest-3-cores
-  #        #- name: "macOS latest - 32 cores"
+  #        #- cores: "32"
   #        #  os: macos-latest-32-cores
-  #  name: "CPython - ${{ matrix.name }}"
+  #  name: "CPython - ${{ matrix.os }} - ${{ matrix.cores }}"
   #  runs-on: ${{ matrix.os }}
   #  env:
   #    HOMEBREW_NO_ANALYTICS: 1

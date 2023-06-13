@@ -78,14 +78,3 @@ def get_github_benchmark_filenames_and_yaml_name_section() -> (
             filename=benchmark_file.name,
             yaml_name_section_value=yaml_data["name"],
         )
-
-
-def get_github_benchmark_file_by_yaml_name_section() -> dict[str, pathlib.Path]:
-    d = {}
-    for benchmark_file in DOT_GITHUB_WORKFLOWS_FOLDER.glob("benchmark_*.yml"):
-        with open(benchmark_file) as f:
-            yaml_data = yaml.safe_load(f.read())
-
-        d[yaml_data["name"]] = benchmark_file
-
-    return d
