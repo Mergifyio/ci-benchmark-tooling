@@ -15,7 +15,11 @@ RE_IMAGE_NAME_CORES = re.compile(r"-\d+-cores$")
 
 def get_infos_from_github_job_name(job_name: str) -> types.GitHubJobNameInfos:
     if job_name.count(" - ") == 2:
-        tested_repository, runner_cores, runner_type = job_name.split(
+        (
+            tested_repository,
+            runner_os,
+            runner_cores,
+        ) = job_name.split(
             " - ",
         )
         additional_infos = ""
