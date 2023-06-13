@@ -21,13 +21,13 @@ jobs:
       # build_win32 job, with some paths modified
       - run:
           name: Build CPython
-          command: .\CPython\PCbuild\build.bat -e -d -p Win32
+          command: ./CPython/PCbuild/build.bat -e -d -p Win32
       - run:
           name: Display build info
-          command: .\CPython\python.bat -m test.pythoninfo
+          command: ./CPython/python.bat -m test.pythoninfo
       - run:
           name: Tests
-          command: .\CPython\PCbuild\rt.bat -p Win32 -d -q -uall -u-cpu -rwW --slowest --timeout=1200 -j0
+          command: ./CPython/PCbuild/rt.bat -p Win32 -d -q -uall -u-cpu -rwW --slowest --timeout=1200 -j0
 
   CPython - Windows x64:
     parameters:
@@ -50,13 +50,13 @@ jobs:
           command: echo "::add-matcher::CPython/.github/problem-matchers/msvc.json"
       - run:
           name: Build CPython
-          command: .\CPython\PCbuild\build.bat -e -d -p x64
+          command: ./CPython/PCbuild/build.bat -e -d -p x64
       - run:
           name: Display build info
-          command: .\CPython\python.bat -m test.pythoninfo
+          command: ./CPython/python.bat -m test.pythoninfo
       - run:
           name: Tests
-          command: .\CPython\PCbuild\rt.bat -p x64 -d -q -uall -u-cpu -rwW --slowest --timeout=1200 -j0
+          command: ./CPython/PCbuild/rt.bat -p x64 -d -q -uall -u-cpu -rwW --slowest --timeout=1200 -j0
 
   CPython - Ubuntu:
     parameters:
@@ -155,7 +155,7 @@ jobs:
       - run:
           name: Configure CPython
           command: |
-            CFLAGS=v"-I$(brew --prefix gdbm)/include -I$(brew --prefix xz)/include" \
+            CFLAGS="-I$(brew --prefix gdbm)/include -I$(brew --prefix xz)/include" \
             LDFLAGS="-L$(brew --prefix gdbm)/lib -I$(brew --prefix xz)/lib" \
             PKG_CONFIG_PATH="$(brew --prefix tcl-tk)/lib/pkgconfig" \
             ./CPython/configure \
