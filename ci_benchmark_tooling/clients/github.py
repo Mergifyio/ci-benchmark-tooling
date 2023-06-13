@@ -209,10 +209,8 @@ class GitHubClient(base.BaseClient):
         workflows_ids_for_env = ",".join(
             map(str, self.workflows_names_and_ids.values()),
         )
-        self.logger.info(
-            "Workflow IDs: %s",
-            workflows_ids_for_env,
-        )
+        self.logger.info("Workflows IDs: %s", workflows_ids_for_env)
+
         utils.write_workflow_ids_to_github_env(
             constants.GITHUB_WORKFLOW_IDS_ENV_PREFIX,
             workflows_ids_for_env,

@@ -62,11 +62,39 @@ class CircleCiClient(base.BaseClient):
             },
             http2=True,
         )
-        self.pipeline_id = None
+        self.pipeline_id: str | None = None
 
     ##############################
     ############ WORKFLOW DISPATCH
     ##############################
+
+    def get_workflows_ids_of_pipeline(self, pipeline_id: str) -> str:
+        """
+        Returns the list of workflows ids of a pipeline as a comma-separated list.
+
+        If circleci's endpoint return some empty ids, which can happen when the request
+        is made too fast after the pipeline was created, then we retry 2 seconds later.
+        The retry is made until all ids of a workflows of a pipeline are filled.
+        """
+
+        while True:
+            time.sleep(2)
+
+            resp_pipeline_workflows = self.get(f"/pipeline/{pipeline_id}/workflow")
+            if resp_pipeline_workflows.status_code != 200:
+                self.logger.error(
+                    "CircleCI response error: %s",
+                    resp_pipeline_workflows.text,
+                    status_code=resp_pipeline_workflows.status_code,
+                )
+                continue
+
+            if any(not w["id"] for w in resp_pipeline_workflows.json()["items"]):
+                continue
+
+            return ",".join(
+                [w["id"] for w in resp_pipeline_workflows.json()["items"]],
+            )
 
     def send_dispatch_events(
         self,
@@ -91,18 +119,10 @@ class CircleCiClient(base.BaseClient):
         self.pipeline_id = resp_new_pipeline.json()["id"]
         self.logger.info("New pipeline ID: %s", self.pipeline_id)
 
-        resp_pipeline_workflows = self.get(f"/pipeline/{self.pipeline_id}/workflow")
-        if resp_pipeline_workflows.status_code != 200:
-            self.logger.error(
-                "CircleCI response error: %s",
-                resp_pipeline_workflows.text,
-                status_code=resp_pipeline_workflows.status_code,
-            )
-            return 1
+        if self.pipeline_id is None:
+            raise RuntimeError("self.pipeline_id should not be None")  # noqa
 
-        workflows_ids_for_env = ",".join(
-            [w["id"] for w in resp_pipeline_workflows.json()["items"]],
-        )
+        workflows_ids_for_env = self.get_workflows_ids_of_pipeline(self.pipeline_id)
         self.logger.info("Workflows IDS: %s", workflows_ids_for_env)
 
         utils.write_workflow_ids_to_github_env(
