@@ -62,33 +62,13 @@ class CircleCiClient(base.BaseClient):
             },
             http2=True,
         )
+        self.pipeline_id = None
 
     ##############################
     ############ WORKFLOW DISPATCH
     ##############################
 
-    def wait_for_pipeline_workflows_to_end(self, pipeline_id: str) -> None:
-        self.logger.info("Starting workflows polling...")
-
-        while True:
-            resp_pipeline_workflows = self.get(f"/pipeline/{pipeline_id}/workflows")
-            if resp_pipeline_workflows.status_code != 200:
-                self.logger.warning(
-                    "CircleCI response error: %s",
-                    resp_pipeline_workflows.text,
-                    status_code=resp_pipeline_workflows.status_code,
-                )
-                continue
-
-            if all(
-                w["stopped_at"] is not None
-                for w in resp_pipeline_workflows.json()["items"]
-            ):
-                return
-
-            time.sleep(60)
-
-    def send_dispatch_events_and_wait_for_end(
+    def send_dispatch_events(
         self,
         repository_owner: str,
         repository_name: str,
@@ -108,10 +88,10 @@ class CircleCiClient(base.BaseClient):
             )
             return 1
 
-        pipeline_id = resp_new_pipeline.json()["id"]
-        self.logger.info("New pipeline ID: %s", pipeline_id)
+        self.pipeline_id = resp_new_pipeline.json()["id"]
+        self.logger.info("New pipeline ID: %s", self.pipeline_id)
 
-        resp_pipeline_workflows = self.get(f"/pipeline/{pipeline_id}/workflows")
+        resp_pipeline_workflows = self.get(f"/pipeline/{self.pipeline_id}/workflows")
         if resp_pipeline_workflows.status_code != 200:
             self.logger.error(
                 "CircleCI response error: %s",
@@ -126,9 +106,30 @@ class CircleCiClient(base.BaseClient):
             ",".join(workflows_ids),
         )
 
-        self.wait_for_pipeline_workflows_to_end(pipeline_id)
-
         return 0
+
+    def wait_for_workflows_to_end(self) -> None:
+        self.logger.info("Starting workflows polling...")
+
+        while True:
+            resp_pipeline_workflows = self.get(
+                f"/pipeline/{self.pipeline_id}/workflows",
+            )
+            if resp_pipeline_workflows.status_code != 200:
+                self.logger.warning(
+                    "CircleCI response error: %s",
+                    resp_pipeline_workflows.text,
+                    status_code=resp_pipeline_workflows.status_code,
+                )
+                continue
+
+            if all(
+                w["stopped_at"] is not None
+                for w in resp_pipeline_workflows.json()["items"]
+            ):
+                return
+
+            time.sleep(60)
 
     ##############################
     ############ CSV RELATED STUFF
@@ -140,8 +141,6 @@ class CircleCiClient(base.BaseClient):
         repository_owner: str,
         repository_name: str,
     ) -> list[types.CsvDataLine]:
-        # TODO
-
         csv_data: list[types.CsvDataLine] = []
 
         for workflow_id in workflows_ids:

@@ -18,17 +18,23 @@ def main(_argv: list[str] | None = None) -> int:
 
     workflow_dispatch_ref = os.getenv("WORKFLOW_DISPATCH_REF", "main")
 
+    clients = []
     for ci_to_benchmark in utils.CIS_TO_BENCHMARK:
         token = utils.get_required_env_variable(ci_to_benchmark["token_env_variable"])
         client = ci_to_benchmark["client"](token)
 
-        ret_value = client.send_dispatch_events_and_wait_for_end(
+        ret_value = client.send_dispatch_events(
             owner,
             repository,
             workflow_dispatch_ref,
         )
         if ret_value != 0:
             return ret_value
+
+        clients.append(client)
+
+    for client in clients:
+        client.wait_for_workflows_to_end()
 
     return 0
 

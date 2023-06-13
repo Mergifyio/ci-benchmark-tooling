@@ -17,12 +17,27 @@ class BaseClient(httpx.Client, abc.ABC):
         self.logger = daiquiri.getLogger(self.__class__.__name__)
 
     @abc.abstractmethod
-    def send_dispatch_events_and_wait_for_end(
+    def send_dispatch_events(
         self,
         repository_owner: str,
         repository_name: str,
         workflow_dispatch_ref: str,
     ) -> int:
+        """
+        Send workflow dispatch events to the relevant CI Provider, and save
+        the required data in the instance of the object to be able to
+        poll the workflows to know if they finished or not.
+        This function also needs to write the worklows ids to the GITHUB_ENV
+        and with a environment variable name prefix relevant to the CI Provider.
+        """
+        ...
+
+    @abc.abstractmethod
+    def wait_for_workflows_to_end(self) -> None:
+        """
+        Use the data saved in the object instance, by `send_dispatch_events`,
+        to check if the workflows we dispatch ended.
+        """
         ...
 
     @abc.abstractmethod

@@ -112,45 +112,13 @@ class GitHubClient(base.BaseClient):
             },
             http2=True,
         )
+        self.repository_owner = None
+        self.repository_name = None
+        self.workflows_names_and_ids = None
 
     ##############################
     ############ WORKFLOW DISPATCH
     ##############################
-
-    def wait_for_workflow_runs_to_end(
-        self,
-        owner: str,
-        repository: str,
-        workflows_names_and_ids: dict[str, int],
-    ) -> None:
-        self.logger.info("Starting workflows polling...")
-
-        while workflows_names_and_ids:
-            keys_to_del = []
-            for workflow_name, run_id in workflows_names_and_ids.items():
-                resp_wr = self.get(f"/repos/{owner}/{repository}/actions/runs/{run_id}")
-
-                if resp_wr.status_code != 200:
-                    self.logger.warning(
-                        "GitHub response error: %s",
-                        resp_wr.text,
-                        status_code=resp_wr.status_code,
-                    )
-                    time.sleep(60)
-                    continue
-
-                if resp_wr.json()["conclusion"] is not None:
-                    self.logger.info("Workflow %s finished", workflow_name)
-                    keys_to_del.append(workflow_name)
-
-            for key in keys_to_del:
-                del workflows_names_and_ids[key]
-
-            if not workflows_names_and_ids:
-                self.logger.info("Workflows polling finished")
-                return
-
-            time.sleep(60)
 
     def retrieve_workflows_ids(
         self,
@@ -219,12 +187,15 @@ class GitHubClient(base.BaseClient):
 
         return 0
 
-    def send_dispatch_events_and_wait_for_end(
+    def send_dispatch_events(
         self,
-        owner: str,
-        repository: str,
+        repository_owner: str,
+        repository_name: str,
         workflow_dispatch_ref: str,
     ) -> int:
+        self.repository_owner = repository_owner
+        self.repository_name = repository_name
+
         self.logger.info("Sending dispatch events for GitHub workflows")
         benchmark_files = list(
             utils.get_github_benchmark_filenames_and_yaml_name_section(),
@@ -242,8 +213,8 @@ class GitHubClient(base.BaseClient):
         now_as_str += f"{z[:3]}:{z[3:]}"
 
         ret_value = self._send_dispatch_event_for_benchmark_files(
-            owner,
-            repository,
+            self.repository_owner,
+            self.repository_name,
             workflow_dispatch_ref,
             [f.filename for f in benchmark_files],
         )
@@ -253,35 +224,63 @@ class GitHubClient(base.BaseClient):
         # Initiate the dict of workflow names and ids with
         # all the ids set to -1, the ids will be set by the call
         # to the function `self.retrieve_workflows_ids`
-        workflows_names_and_ids: dict[str, int] = {
+        self.workflows_names_and_ids: dict[str, int] = {
             f.yaml_name_section_value: -1 for f in benchmark_files
         }
 
         self.retrieve_workflows_ids(
-            owner,
-            repository,
+            self.repository_owner,
+            self.repository_name,
             now_as_str,
-            workflows_names_and_ids,
+            self.workflows_names_and_ids,
         )
         self.logger.info(
             "Workflow IDs of the latest launched benchmarks: %s",
-            workflows_names_and_ids.values(),
+            self.workflows_names_and_ids.values(),
         )
 
         workflows_ids_for_env = ",".join(
-            map(str, workflows_names_and_ids.values()),
+            map(str, self.workflows_names_and_ids.values()),
         )
         utils.write_workflow_ids_to_github_env(
             constants.GITHUB_WORKFLOW_IDS_ENV_PREFIX,
             workflows_ids_for_env,
         )
 
-        self.wait_for_workflow_runs_to_end(
-            owner,
-            repository,
-            workflows_names_and_ids,
-        )
         return 0
+
+    def wait_for_workflows_to_end(self) -> None:
+        self.logger.info("Starting workflows polling...")
+
+        workflows_names_and_ids = self.workflows_names_and_ids.copy()
+        while workflows_names_and_ids:
+            keys_to_del = []
+            for workflow_name, run_id in workflows_names_and_ids.items():
+                resp_wr = self.get(
+                    f"/repos/{self.repository_owner}/{self.repository_name}/actions/runs/{run_id}",
+                )
+
+                if resp_wr.status_code != 200:
+                    self.logger.warning(
+                        "GitHub response error: %s",
+                        resp_wr.text,
+                        status_code=resp_wr.status_code,
+                    )
+                    time.sleep(60)
+                    continue
+
+                if resp_wr.json()["conclusion"] is not None:
+                    self.logger.info("Workflow '%s' finished", workflow_name)
+                    keys_to_del.append(workflow_name)
+
+            for key in keys_to_del:
+                del workflows_names_and_ids[key]
+
+            if not workflows_names_and_ids:
+                self.logger.info("Workflows polling finished")
+                return
+
+            time.sleep(60)
 
     ##############################
     ############ CSV RELATED STUFF
