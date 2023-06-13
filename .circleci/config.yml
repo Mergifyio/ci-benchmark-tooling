@@ -3,15 +3,61 @@
 version: 2.1
 
 jobs:
-  #benchmark-cpython-windows:
-  #  parameters:
-  #    resource_class:
-  #      type: string
-  #  machine:
-  #    image: windows-server-2019-vs2019:2022.08.1
-  #  resource_class: << parameters.resource_class >>
-  #  steps:
-  #    - checkout
+  CPython - Windows x86:
+    parameters:
+      resource_class:
+        type: string
+    machine:
+      image: windows-server-2019-vs2019:2022.08.1
+    resource_class: << parameters.resource_class >>
+    environment:
+      IncludeUwp: 'true'
+    steps:
+      - run:
+          name: Clone CPython
+          command: git clone --depth 1 -b main https://github.com/python/cpython.git CPython
+
+      # Following steps are copy/pasted from CPython's .github/workflows/build.yml
+      # build_win32 job, with some paths modified
+      - run:
+          name: Build CPython
+          command: .\CPython\PCbuild\build.bat -e -d -p Win32
+      - run:
+          name: Display build info
+          command: .\CPython\python.bat -m test.pythoninfo
+      - run:
+          name: Tests
+          command: .\CPython\PCbuild\rt.bat -p Win32 -d -q -uall -u-cpu -rwW --slowest --timeout=1200 -j0
+
+  CPython - Windows x64:
+    parameters:
+      resource_class:
+        type: string
+    machine:
+      image: windows-server-2019-vs2019:2022.08.1
+    resource_class: << parameters.resource_class >>
+    environment:
+      IncludeUwp: 'true'
+    steps:
+      - run:
+          name: Clone CPython
+          command: git clone --depth 1 -b main https://github.com/python/cpython.git CPython
+
+      # Following steps are copy/pasted from CPython's .github/workflows/build.yml
+      # build_win_amd64 job, with some paths modified
+      - run:
+          name: Register MSVC problem matcher
+          command: echo "::add-matcher::CPython/.github/problem-matchers/msvc.json"
+      - run:
+          name: Build CPython
+          command: .\CPython\PCbuild\build.bat -e -d -p x64
+      - run:
+          name: Display build info
+          command: .\CPython\python.bat -m test.pythoninfo
+      - run:
+          name: Tests
+          command: .\CPython\PCbuild\rt.bat -p x64 -d -q -uall -u-cpu -rwW --slowest --timeout=1200 -j0
+
   CPython - Ubuntu:
     parameters:
       resource_class:
@@ -84,15 +130,47 @@ jobs:
             cd $CPYTHON_BUILDDIR
             xvfb-run -a -e /dev/stdout make buildbottest TESTOPTS="-j4 -uall,-cpu"
 
-  #benchmark-cpython-macos:
-  #  parameters:
-  #    resource_class:
-  #      type: string
-  #  machine:
-  #    image: xcode:14.0.0
-  #  resource_class: << parameters.resource_class >>
-  #  steps:
-  #    - checkout
+  CPython - MacOS:
+    parameters:
+      resource_class:
+        type: string
+    macos:
+      xcode: 14.3.1
+    resource_class: << parameters.resource_class >>
+    environment:
+      HOMEBREW_NO_ANALYTICS: 1
+      HOMEBREW_NO_AUTO_UPDATE: 1
+      HOMEBREW_NO_INSTALL_CLEANUP: 1
+      PYTHONSTRICTEXTENSIONBUILD: 1
+    steps:
+      - run:
+          name: Clone CPython
+          command: git clone --depth 1 -b main https://github.com/python/cpython.git CPython
+
+      # Following steps are copy/pasted from CPython's .github/workflows/build.yml
+      # build_macos job, with some paths modified
+      - run:
+          name: Install Homebrew dependencies
+          command: brew install pkg-config openssl@1.1 xz gdbm tcl-tk
+      - run:
+          name: Configure CPython
+          command: |
+            CFLAGS=v"-I$(brew --prefix gdbm)/include -I$(brew --prefix xz)/include" \
+            LDFLAGS="-L$(brew --prefix gdbm)/lib -I$(brew --prefix xz)/lib" \
+            PKG_CONFIG_PATH="$(brew --prefix tcl-tk)/lib/pkgconfig" \
+            ./CPython/configure \
+              --with-pydebug \
+              --prefix=/opt/python-dev \
+              --with-openssl="$(brew --prefix openssl@1.1)"
+      - run:
+          name: Build CPython
+          command: make -j4
+      - run:
+          name: Display build info
+          command: make pythoninfo
+      - run:
+          name: Tests
+          command: make buildbottest TESTOPTS="-j4 -uall,-cpu"
 
 workflows:
   Benchmark CPython:
@@ -102,11 +180,18 @@ workflows:
             parameters:
               #resource_class: [medium, large, xlarge, 2xlarge]
               resource_class: [medium, large]
-      #- benchmark-cpython-windows:
-      #    matrix:
-      #      parameters:
-      #        resource_class: [medium, large, xlarge, 2xlarge]
-      #- benchmark-cpython-macos:
-      #    matrix:
-      #      parameters:
-      #        resource_class: [medium, large, xlarge, 2xlarge]
+      - CPython - Windows x86:
+          matrix:
+            parameters:
+              #resource_class: [windows.medium, windows.large, windows.xlarge, windows.2xlarge]
+              resource_class: [windows.medium, windows.large]
+      - CPython - Windows x64:
+          matrix:
+            parameters:
+              #resource_class: [windows.medium, windows.large, windows.xlarge, windows.2xlarge]
+              resource_class: [windows.medium, windows.large]
+      - CPython - MacOS:
+          matrix:
+            parameters:
+              #resource_class: [macos.m1.medium.gen1, macos.x86.medium.gen2, xmacos.m1.large.gen1, macos.x86.metal.gen1]
+              resource_class: [macos.m1.medium.gen1, macos.x86.medium.gen2]

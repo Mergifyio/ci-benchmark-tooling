@@ -43,8 +43,13 @@ def get_machine_image_from_job_name_and_yaml_string(
     job_name: str,
 ) -> str:
     yml_dict = yaml.safe_load(yml_string)
-    # Need to cast into str because the whole dict is of type Any
-    return str(yml_dict["jobs"][job_name]["machine"]["image"])
+
+    # Need to cast the return into str because the whole dict is of type Any
+    if "machine" in yml_dict["jobs"][job_name]:
+        return str(yml_dict["jobs"][job_name]["machine"]["image"])
+
+    # macos image
+    return f"xcode:{yml_dict['jobs'][job_name]['macos']['xcode']}"
 
 
 class CircleCiClient(base.BaseClient):
