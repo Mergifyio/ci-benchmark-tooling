@@ -56,6 +56,8 @@ ignore = [
     # NOTE: built-in shadow, interresting but to raise an error for
     # TypedDict/NamedTuple with key named like builtin, so it's useless
     "A003",
+    # We want to be able to raise exceptions with a custom message
+    "TRY003",
 ]
 
 [tool.ruff.isort]

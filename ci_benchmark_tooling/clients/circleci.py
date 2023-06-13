@@ -44,8 +44,8 @@ def get_machine_image_from_job_name_and_yaml_string(
 ) -> str:
     yml_dict = yaml.safe_load(yml_string)
 
-    # Need to cast the return into str because the whole dict is of type Any
     if "machine" in yml_dict["jobs"][job_name]:
+        # Need to cast the return into str because the whole dict is of type Any
         return str(yml_dict["jobs"][job_name]["machine"]["image"])
 
     # macos image
@@ -113,7 +113,7 @@ class CircleCiClient(base.BaseClient):
         self.logger.info("New pipeline ID: %s", self.pipeline_id)
 
         if self.pipeline_id is None:
-            raise RuntimeError("self.pipeline_id should not be None")  # noqa
+            raise RuntimeError("self.pipeline_id should not be None")
 
         workflows_ids_for_env = self.get_workflows_ids_of_pipeline(self.pipeline_id)
         self.logger.info("Workflows IDS: %s", workflows_ids_for_env)
@@ -132,13 +132,6 @@ class CircleCiClient(base.BaseClient):
             resp_pipeline_workflows = self.get(
                 f"/pipeline/{self.pipeline_id}/workflow",
             )
-            if resp_pipeline_workflows.status_code != 200:
-                self.logger.warning(
-                    "CircleCI response error: %s",
-                    resp_pipeline_workflows.text,
-                    status_code=resp_pipeline_workflows.status_code,
-                )
-                continue
 
             if all(
                 w["stopped_at"] is not None

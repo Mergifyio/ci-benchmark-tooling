@@ -222,7 +222,7 @@ class GitHubClient(base.BaseClient):
         self.logger.info("Starting workflows polling...")
 
         if self.workflows_names_and_ids is None:
-            raise RuntimeError(  # noqa
+            raise RuntimeError(
                 "self.workflows_names_and_ids should not be None",
             )
 
