@@ -113,15 +113,6 @@ class GitHubClient(base.BaseClient):
                 },
             )
 
-            if resp_wr.status_code != 200:
-                self.logger.warning(
-                    "GitHub response error: %s",
-                    resp_wr.text,
-                    status_code=resp_wr.status_code,
-                )
-                time.sleep(2)
-                continue
-
             for workflow_run in resp_wr.json()["workflow_runs"]:
                 if workflow_run["name"] in required_names:
                     workflows_names_and_ids[workflow_run["name"]] = workflow_run["id"]
@@ -141,19 +132,12 @@ class GitHubClient(base.BaseClient):
         benchmark_filenames: list[str],
     ) -> int:
         for benchmark_filename in benchmark_filenames:
-            resp = self.post(
+            self.post(
                 f"/repos/{owner}/{repository}/actions/workflows/{benchmark_filename}/dispatches",
                 json={
                     "ref": workflow_dispatch_ref,
                 },
             )
-            if resp.status_code != 204:
-                self.logger.error(
-                    "Workflow dispatch request failed: %s",
-                    resp.text,
-                    status_code=resp.status_code,
-                )
-                return 1
 
             self.logger.info(
                 "Dispatch event successfuly sent for %s",
@@ -237,15 +221,6 @@ class GitHubClient(base.BaseClient):
                 resp_wr = self.get(
                     f"/repos/{self.repository_owner}/{self.repository_name}/actions/runs/{run_id}",
                 )
-
-                if resp_wr.status_code != 200:
-                    self.logger.warning(
-                        "GitHub response error: %s",
-                        resp_wr.text,
-                        status_code=resp_wr.status_code,
-                    )
-                    time.sleep(60)
-                    continue
 
                 if resp_wr.json()["conclusion"] is not None:
                     self.logger.info("Workflow '%s' finished", workflow_name)

@@ -60,5 +60,6 @@ class BaseClient(httpx.Client, abc.ABC):
         ):
             with attempt:
                 resp = super().request(*args, **kwargs)
+                resp.raise_for_status()
 
         return resp
