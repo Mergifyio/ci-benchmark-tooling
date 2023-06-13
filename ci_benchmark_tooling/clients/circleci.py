@@ -91,7 +91,7 @@ class CircleCiClient(base.BaseClient):
         self.pipeline_id = resp_new_pipeline.json()["id"]
         self.logger.info("New pipeline ID: %s", self.pipeline_id)
 
-        resp_pipeline_workflows = self.get(f"/pipeline/{self.pipeline_id}/workflows")
+        resp_pipeline_workflows = self.get(f"/pipeline/{self.pipeline_id}/workflow")
         if resp_pipeline_workflows.status_code != 200:
             self.logger.error(
                 "CircleCI response error: %s",
@@ -113,7 +113,7 @@ class CircleCiClient(base.BaseClient):
 
         while True:
             resp_pipeline_workflows = self.get(
-                f"/pipeline/{self.pipeline_id}/workflows",
+                f"/pipeline/{self.pipeline_id}/workflow",
             )
             if resp_pipeline_workflows.status_code != 200:
                 self.logger.warning(
