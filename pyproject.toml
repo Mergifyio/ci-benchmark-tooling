@@ -17,7 +17,6 @@ pyyaml = "^6.0"
 tenacity = "^8.2.2"
 
 [tool.poetry.scripts]
-  launch-build = "ci_benchmark_tooling.launch_build_workflow:main"
   dispatch-benchmark-workflows = "ci_benchmark_tooling.dispatch_benchmark_workflows:main"
   create-benchmark-report = "ci_benchmark_tooling.create_benchmark_report:main"
 
