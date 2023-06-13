@@ -10,14 +10,14 @@ if typing.TYPE_CHECKING:
 class GitHubJobNameInfos(typing.NamedTuple):
     tested_repository: str
     runner_os: str
-    runner_type: str
+    runner_cores: int
     additional_infos: str
 
 
 class CsvDataLine(typing.NamedTuple):
     ci_provider: str
     runner_os: str
-    runner_type: str
+    runner_cores: int
     tested_repository: str
     step_name: str
     time_spent_in_secs: int

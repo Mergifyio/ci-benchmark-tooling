@@ -100,10 +100,14 @@ class CircleCiClient(base.BaseClient):
             )
             return 1
 
-        workflows_ids = [w["id"] for w in resp_pipeline_workflows.json()["items"]]
+        workflows_ids_for_env = ",".join(
+            [w["id"] for w in resp_pipeline_workflows.json()["items"]],
+        )
+        self.logger.info("Workflows IDS: %s", workflows_ids_for_env)
+
         utils.write_workflow_ids_to_github_env(
             constants.CIRCLECI_WORKFLOW_IDS_ENV_PREFIX,
-            ",".join(workflows_ids),
+            workflows_ids_for_env,
         )
 
         return 0
@@ -191,13 +195,13 @@ class CircleCiClient(base.BaseClient):
                 for step_name, time_spent in time_per_step.items():
                     additional_infos = ""
                     if step_name in constants.CIRCLECI_JOB_STEPS:
-                        additional_infos = "CircleCI Step"
+                        additional_infos = "CircleCI machine setup step"
 
                     csv_data.append(
                         types.CsvDataLine(
                             "CircleCI",
                             runner_os,
-                            details["picard"]["resource_class"]["class"],
+                            details["picard"]["resource_class"]["cpu"],
                             tested_repository,
                             step_name,
                             time_spent,

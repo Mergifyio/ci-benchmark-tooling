@@ -15,7 +15,7 @@ RE_IMAGE_NAME_CORES = re.compile(r"-\d+-cores$")
 
 def get_infos_from_github_job_name(job_name: str) -> types.GitHubJobNameInfos:
     if job_name.count(" - ") == 2:
-        tested_repository, runner_os, runner_type = job_name.split(
+        tested_repository, runner_cores, runner_type = job_name.split(
             " - ",
         )
         additional_infos = ""
@@ -23,7 +23,7 @@ def get_infos_from_github_job_name(job_name: str) -> types.GitHubJobNameInfos:
         (
             tested_repository,
             runner_os,
-            runner_type,
+            runner_cores,
             additional_infos,
         ) = job_name.split(
             " - ",
@@ -34,10 +34,12 @@ def get_infos_from_github_job_name(job_name: str) -> types.GitHubJobNameInfos:
     # will be redundant
     runner_os = RE_IMAGE_NAME_CORES.sub("", runner_os)
 
+    runner_cores_int = int(runner_cores.replace(" cores", ""))
+
     return types.GitHubJobNameInfos(
         tested_repository,
         runner_os,
-        runner_type,
+        runner_cores_int,
         additional_infos,
     )
 
@@ -203,13 +205,13 @@ class GitHubClient(base.BaseClient):
             now_as_str,
             self.workflows_names_and_ids,
         )
-        self.logger.info(
-            "Workflow IDs of the latest launched benchmarks: %s",
-            self.workflows_names_and_ids.values(),
-        )
 
         workflows_ids_for_env = ",".join(
             map(str, self.workflows_names_and_ids.values()),
+        )
+        self.logger.info(
+            "Workflow IDs: %s",
+            workflows_ids_for_env,
         )
         utils.write_workflow_ids_to_github_env(
             constants.GITHUB_WORKFLOW_IDS_ENV_PREFIX,
@@ -304,7 +306,7 @@ class GitHubClient(base.BaseClient):
 
             for step_name, time_spent in time_per_step.items():
                 if step_name in constants.GITHUB_JOB_STEPS:
-                    additional_infos = "GitHub Step"
+                    additional_infos = "GitHub runner setup step"
                 else:
                     additional_infos = job_infos.additional_infos
 
@@ -312,7 +314,7 @@ class GitHubClient(base.BaseClient):
                     types.CsvDataLine(
                         "GitHub",
                         job_infos.runner_os,
-                        job_infos.runner_type,
+                        job_infos.runner_cores,
                         job_infos.tested_repository,
                         step_name,
                         int(time_spent.total_seconds()),

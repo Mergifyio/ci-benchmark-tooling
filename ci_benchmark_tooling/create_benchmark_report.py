@@ -11,6 +11,7 @@ from ci_benchmark_tooling import utils
 
 
 daiquiri.setup(level=logging.INFO)
+LOG = daiquiri.getLogger(__name__)
 
 OUTPUT_CSV_FILE = pathlib.Path(os.path.dirname(__file__)) / "benchmark_data.csv"
 
@@ -39,7 +40,7 @@ def write_csv_data(csv_data: list[types.CsvDataLine]) -> None:
 
 def main(_argv: list[str] | None = None) -> int:
     github_repository = utils.get_required_env_variable("GITHUB_REPOSITORY")
-    owner, repository = github_repository.split("/")
+    repo_owner, repo_name = github_repository.split("/")
 
     csv_data: list[types.CsvDataLine] = []
 
@@ -47,19 +48,24 @@ def main(_argv: list[str] | None = None) -> int:
         token = utils.get_required_env_variable(ci_to_benchmark["token_env_variable"])
         client = ci_to_benchmark["client"](token)
 
-        # Retrieve the list of workflows ids from the needed env variable
         workflows_ids_str: str = utils.get_required_env_variable(
             utils.get_benchmark_workflow_run_ids_env_variable_name(
                 ci_to_benchmark["workflow_ids_env_variable_prefix"],
             ),
+        )
+
+        LOG.info(
+            "Workflows ids for %s = %s",
+            ci_to_benchmark["workflow_ids_env_variable_prefix"],
+            workflows_ids_str,
         )
         workflows_ids = workflows_ids_str.split(",")
 
         csv_data.extend(
             client.generate_csv_data_from_workflows_ids(
                 workflows_ids,
-                owner,
-                repository,
+                repo_owner,
+                repo_name,
             ),
         )
 
