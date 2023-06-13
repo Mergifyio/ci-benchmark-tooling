@@ -68,7 +68,20 @@ class CircleCiClient(base.BaseClient):
     ############ WORKFLOW DISPATCH
     ##############################
 
-    def get_workflows_ids_of_pipeline(self, pipeline_id: str) -> str:
+    def get_latest_benchmark_workflows_ids(
+        self,
+        repo_owner: str,
+        _repo_name: str,
+    ) -> list[str]:
+        resp_pipeline = self.get(
+            "/pipeline",
+            params={"org-slug": f"gh/{repo_owner}"},
+        )
+        latest_pipeline_id = resp_pipeline.json()["items"][0]["id"]
+
+        return self.get_workflows_ids_of_pipeline(latest_pipeline_id)
+
+    def get_workflows_ids_of_pipeline(self, pipeline_id: str) -> list[str]:
         """
         Returns the list of workflows ids of a pipeline as a comma-separated list.
 
@@ -78,16 +91,13 @@ class CircleCiClient(base.BaseClient):
         """
 
         while True:
-            time.sleep(2)
-
             resp_pipeline_workflows = self.get(f"/pipeline/{pipeline_id}/workflow")
 
             if any(not w["id"] for w in resp_pipeline_workflows.json()["items"]):
+                time.sleep(2)
                 continue
 
-            return ",".join(
-                [w["id"] for w in resp_pipeline_workflows.json()["items"]],
-            )
+            return [w["id"] for w in resp_pipeline_workflows.json()["items"]]
 
     def send_dispatch_events(
         self,
@@ -115,7 +125,8 @@ class CircleCiClient(base.BaseClient):
         if self.pipeline_id is None:
             raise RuntimeError("self.pipeline_id should not be None")
 
-        workflows_ids_for_env = self.get_workflows_ids_of_pipeline(self.pipeline_id)
+        workflows_ids = self.get_workflows_ids_of_pipeline(self.pipeline_id)
+        workflows_ids_for_env = ",".join(workflows_ids)
         self.logger.info("Workflows IDS: %s", workflows_ids_for_env)
 
         utils.write_workflow_ids_to_github_env(

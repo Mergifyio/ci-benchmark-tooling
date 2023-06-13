@@ -95,6 +95,33 @@ class GitHubClient(base.BaseClient):
     ############ WORKFLOW DISPATCH
     ##############################
 
+    def get_latest_benchmark_workflows_ids(
+        self,
+        repository_owner: str,
+        repository_name: str,
+    ) -> list[str]:
+        ids: list[str] = []
+        benchmark_files = utils.get_github_benchmark_filenames_and_yaml_name_section()
+        benchmark_names = [b.yaml_name_section_value for b in benchmark_files]
+
+        resp_workflows = self.get(
+            f"/repos/{repository_owner}/{repository_name}/actions/runs",
+            params={
+                "event": "workflow_dispatch",
+            },
+        )
+        job_runs = typing.cast(
+            github_types.GitHubWorkflowRunsList,
+            resp_workflows.json(),
+        )
+
+        for job in job_runs["workflow_runs"]:
+            if job["name"] in benchmark_names:
+                ids.append(str(job["id"]))
+                benchmark_names.remove(job["name"])
+
+        return ids
+
     def retrieve_workflows_ids(
         self,
         owner: str,

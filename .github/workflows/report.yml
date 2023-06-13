@@ -1,14 +1,14 @@
-name: Launch benchmarks and create report
+name: Create report from latest benchmark workflows
 
 permissions:
-  actions: write  # Need write for workflow_dispatch event
+  actions: write
   contents: read
 
 on:
   workflow_dispatch:
 
 jobs:
-  launch-benchmarks-and-make-report:
+  create-report-from-latest-workflows:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -26,11 +26,8 @@ jobs:
           pip install -r requirements-poetry.txt
           poetry install
 
-      - name: Dispatch workflows
-        run: poetry run dispatch-benchmark-workflows
-
       - name: Create report
-        run: poetry run create-benchmark-report env
+        run: poetry run create-benchmark-report api
 
       - name: Setup Google Auth 🔧
         uses: "google-github-actions/auth@v1"

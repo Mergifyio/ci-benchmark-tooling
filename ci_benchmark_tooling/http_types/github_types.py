@@ -97,3 +97,8 @@ class GitHubJobRun(typing.TypedDict):
 class GitHubJobRunList(typing.TypedDict):
     total_count: int
     jobs: list[GitHubJobRun]
+
+
+class GitHubWorkflowRunsList(typing.TypedDict):
+    total_count: int
+    workflow_runs: list[GitHubWorkflowRun]

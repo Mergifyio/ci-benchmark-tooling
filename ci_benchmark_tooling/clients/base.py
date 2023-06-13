@@ -50,6 +50,14 @@ class BaseClient(httpx.Client, abc.ABC):
     ) -> list[types.CsvDataLine]:
         ...
 
+    @abc.abstractmethod
+    def get_latest_benchmark_workflows_ids(
+        self,
+        repository_owner: str,
+        repository_name: str,
+    ) -> list[str]:
+        ...
+
     def request(self, *args: typing.Any, **kwargs: typing.Any) -> httpx.Response:
         for attempt in tenacity.Retrying(
             reraise=True,
@@ -57,6 +65,7 @@ class BaseClient(httpx.Client, abc.ABC):
                 (httpx.StreamError, httpx.HTTPError),
             ),
             wait=tenacity.wait_exponential(0.2),
+            stop=tenacity.stop_after_attempt(5),
         ):
             with attempt:
                 resp = super().request(*args, **kwargs)
