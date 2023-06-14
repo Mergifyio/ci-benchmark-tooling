@@ -6,6 +6,17 @@ permissions:
 
 on:
   workflow_dispatch:
+    inputs:
+      github_workflows_ids:
+        description: "Comma-separated list of GitHub workflows ids to use to create the report"
+        required: false
+        default: ""
+        type: string
+      circleci_workflows_ids:
+        description: "Comma-separated list of CircleCI workflows ids to use to create the report"
+        required: false
+        default: ""
+        type: string
 
 jobs:
   create-report-from-latest-workflows:
@@ -27,7 +38,16 @@ jobs:
           poetry install
 
       - name: Create report
-        run: poetry run create-benchmark-report api
+        run: |
+          args=""
+          if [[ ! -z "${{ inputs.github_workflows_ids }}" ]]; then
+            args="--github ${{ inputs.github_workflows_ids }}"
+          fi
+          if [[ ! -z "${{ inputs.circleci_workflows_ids }}" ]]; then
+            args=$args" --circleci ${{ inputs.circleci_workflows_ids }}"
+          fi
+
+          poetry run create-benchmark-report api $args
 
       - name: Setup Google Auth 🔧
         uses: "google-github-actions/auth@v1"

@@ -40,8 +40,30 @@ def write_csv_data(csv_data: list[types.CsvDataLine]) -> None:
 
 
 def get_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Create benchmark report")
-    parser.add_argument("source", choices=["env", "api"])
+    parser = argparse.ArgumentParser(
+        description="Create benchmark report",
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    parser.add_argument(
+        "source",
+        choices=["env", "api"],
+        help="""\
+'env' will retrieve the workflows ids for each ci provider from environment variables.
+'api' will retrieve the workflows ids for each ci provider from api requests, by fetching
+the latest benchmark workflows run.
+If you specify every workflows ids from the optional arguments, then you can pick whatever choice for this.
+""",
+    )
+
+    for ci in utils.CIS_TO_BENCHMARK:
+        parser.add_argument(
+            f"--{ci['workflow_ids_env_variable_prefix'].lower()}",
+            type=str,
+            help=f"Comma-separated list of the workflows ids to create the report from for {ci['workflow_ids_env_variable_prefix'].lower()}.",
+            metavar="WORKFLOWS_IDS",
+            default=None,
+        )
+
     return parser
 
 
@@ -59,19 +81,26 @@ def main(argv: list[str] | None = None) -> int:
         token = utils.get_required_env_variable(ci_to_benchmark["token_env_variable"])
         client = ci_to_benchmark["client"](token)
 
-        if args.source == "env":
+        ids_from_parser = getattr(
+            args,
+            ci_to_benchmark["workflow_ids_env_variable_prefix"].lower(),
+        )
+        if ids_from_parser is not None:
+            workflows_ids = ids_from_parser.split(",")
+        elif args.source == "env":
             workflows_ids_str: str = utils.get_required_env_variable(
                 utils.get_benchmark_workflow_run_ids_env_variable_name(
                     ci_to_benchmark["workflow_ids_env_variable_prefix"],
                 ),
             )
             workflows_ids = workflows_ids_str.split(",")
-        else:
-            # args.source == "api"
+        elif args.source == "api":
             workflows_ids = client.get_latest_benchmark_workflows_ids(
                 repo_owner,
                 repo_name,
             )
+        else:
+            raise RuntimeError("How did we get here???")
 
         LOG.info(
             "Workflows ids for %s = %s",
