@@ -293,10 +293,12 @@ class GitHubClient(base.BaseClient):
             time_per_step = get_time_spent_per_job_step(job["steps"])
 
             for step_name, time_spent in time_per_step.items():
+                additional_infos = job_infos.additional_infos
                 if step_name in constants.GITHUB_JOB_STEPS:
-                    additional_infos = "GitHub runner setup step"
-                else:
-                    additional_infos = job_infos.additional_infos
+                    if additional_infos:
+                        additional_infos += " / "
+
+                    additional_infos += "GitHub runner setup step"
 
                 csv_data.append(
                     types.CsvDataLine(
