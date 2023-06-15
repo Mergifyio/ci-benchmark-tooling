@@ -8,4 +8,7 @@ sequence = [
   "ruff check .",
   "black --check .",
   "mypy",
+  # Disable line length rule because we have some pretty big urls
+  # that can't be split up
+  "pymarkdown -d md013 scan README.md"
 ]
