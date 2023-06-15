@@ -172,6 +172,44 @@ jobs:
           name: Tests
           command: make buildbottest TESTOPTS="-j4 -uall,-cpu"
 
+  Cores infos - Ubuntu:
+    parameters:
+      resource_class:
+        type: string
+    machine:
+      image: ubuntu-2204:2023.04.2
+    resource_class: << parameters.resource_class >>
+    steps:
+      - run:
+          name: Display total number of cores
+          command: lscpu
+
+  Cores infos - Windows:
+    parameters:
+      resource_class:
+        type: string
+    machine:
+      image: windows-server-2019-vs2019:2022.08.1
+    resource_class: << parameters.resource_class >>
+    steps:
+      - run:
+          name: Display total number of cores
+          command: wmic cpu get NumberOfCores,NumberOfLogicalProcessors
+
+
+  Cores infos - MacOS:
+    parameters:
+      resource_class:
+        type: string
+    macos:
+      xcode: 14.3.1
+    resource_class: << parameters.resource_class >>
+    steps:
+      - run:
+          name: Display total number of cores
+          command: system_profiler SPHardwareDataType
+
+
 workflows:
   Benchmark CPython:
     jobs:
@@ -191,6 +229,24 @@ workflows:
               #resource_class: [windows.medium, windows.large, windows.xlarge, windows.2xlarge]
               resource_class: [windows.medium, windows.large]
       - CPython - MacOS:
+          matrix:
+            parameters:
+              #resource_class: [macos.m1.medium.gen1, macos.x86.medium.gen2, xmacos.m1.large.gen1, macos.x86.metal.gen1]
+              resource_class: [macos.m1.medium.gen1, macos.x86.medium.gen2]
+
+  Machines cores info:
+    jobs:
+      - Cores infos - Ubuntu:
+          matrix:
+            parameters:
+              #resource_class: [medium, large, xlarge, 2xlarge]
+              resource_class: [medium, large]
+      - Cores infos - Windows:
+          matrix:
+            parameters:
+              #resource_class: [windows.medium, windows.large, windows.xlarge, windows.2xlarge]
+              resource_class: [windows.medium, windows.large]
+      - Cores infos - MacOS:
           matrix:
             parameters:
               #resource_class: [macos.m1.medium.gen1, macos.x86.medium.gen2, xmacos.m1.large.gen1, macos.x86.metal.gen1]
