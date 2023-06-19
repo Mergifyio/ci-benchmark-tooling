@@ -9,18 +9,23 @@ jobs:
       matrix:
         include:
           #- cores: "2"
-          #  os: ubuntu-latest-2-cores
+          #  os: ubuntu-2204
+          #  osname: ubuntu-2204
+          - cores: "2"
+            os: ubuntu-2204-2-cores-aws-xlarge
+            osname: ubuntu-2204
           #- cores: "4"
           #  os: ubuntu-latest-4-cores
           - cores: "8"
             os: ubuntu-latest-8-cores
+            osname: ubuntu-latest
           #- cores: "16"
           #  os: ubuntu-latest-16-cores
           #- cores: "32"
           #  os: ubuntu-latest-32-cores
           #- cores: "64"
           #  os: ubuntu-latest-64-cores
-    name: "CPython - ${{ matrix.os }} - ${{ matrix.cores}} cores"
+    name: "CPython - ${{ matrix.osname }} - ${{ matrix.cores}} cores"
     runs-on: ${{ matrix.os }}
     env:
       OPENSSL_VER: 1.1.1t
