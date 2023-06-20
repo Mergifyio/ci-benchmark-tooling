@@ -2,6 +2,8 @@
 
 This README contains pricing information for all the CI providers compared by the benchmarks.
 
+To easily calculate the price it would cost you to use a runner for a specified number of minutes, you can go to <https://mergifyio.github.io/ci-benchmark-tooling/>
+
 ## CircleCI
 
 Payment is "credit" based.  
