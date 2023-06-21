@@ -24,6 +24,7 @@ def init_csv_file() -> None:
             [
                 "CI Provider",
                 "Runner OS",
+                "Runner type",
                 "Runner cores",
                 "Repository tested",
                 "Step",

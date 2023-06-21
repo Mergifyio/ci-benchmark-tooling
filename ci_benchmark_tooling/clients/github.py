@@ -14,10 +14,11 @@ RE_IMAGE_NAME_CORES = re.compile(r"-\d+-cores$")
 
 
 def get_infos_from_github_job_name(job_name: str) -> types.GitHubJobNameInfos:
-    if job_name.count(" - ") == 2:
+    if job_name.count(" - ") == 3:
         (
             tested_repository,
             runner_os,
+            runner_type,
             runner_cores,
         ) = job_name.split(
             " - ",
@@ -27,11 +28,12 @@ def get_infos_from_github_job_name(job_name: str) -> types.GitHubJobNameInfos:
         (
             tested_repository,
             runner_os,
+            runner_type,
             runner_cores,
             additional_infos,
         ) = job_name.split(
             " - ",
-            3,
+            4,
         )
 
     # Remove the trailing `-\d+-cores` from the image name, it
@@ -43,6 +45,7 @@ def get_infos_from_github_job_name(job_name: str) -> types.GitHubJobNameInfos:
     return types.GitHubJobNameInfos(
         tested_repository,
         runner_os,
+        runner_type,
         runner_cores_int,
         additional_infos,
     )
@@ -302,13 +305,14 @@ class GitHubClient(base.BaseClient):
 
                 csv_data.append(
                     types.CsvDataLine(
-                        "GitHub",
-                        job_infos.runner_os,
-                        job_infos.runner_cores,
-                        job_infos.tested_repository,
-                        step_name,
-                        int(time_spent.total_seconds()),
-                        additional_infos,
+                        ci_provider="GitHub",
+                        runner_os=job_infos.runner_os,
+                        runner_type=job_infos.runner_type,
+                        runner_cores=job_infos.runner_cores,
+                        tested_repository=job_infos.tested_repository,
+                        step_name=step_name,
+                        time_spent_in_secs=int(time_spent.total_seconds()),
+                        additional_infos=additional_infos,
                     ),
                 )
 

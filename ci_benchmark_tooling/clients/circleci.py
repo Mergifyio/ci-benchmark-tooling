@@ -200,13 +200,14 @@ class CircleCiClient(base.BaseClient):
 
                     csv_data.append(
                         types.CsvDataLine(
-                            "CircleCI",
-                            runner_os,
-                            details["picard"]["resource_class"]["cpu"],
-                            tested_repository,
-                            step_name,
-                            time_spent,
-                            additional_infos,
+                            ci_provider="CircleCI",
+                            runner_os=runner_os,
+                            runner_type="CircleCI-Hosted",
+                            runner_cores=details["picard"]["resource_class"]["cpu"],
+                            tested_repository=tested_repository,
+                            step_name=step_name,
+                            time_spent_in_secs=time_spent,
+                            additional_infos=additional_infos,
                         ),
                     )
 

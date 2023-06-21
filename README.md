@@ -17,7 +17,8 @@ Payment is minute based.
 The base minute price is $0.008 USD per GB of storage per day and per-minute usage.  
 ⚠️ GitHub rounds the minutes and partial minutes each job uses up to the nearest whole minute.  
 
-### [Number of minutes and storage per GitHub plan]( <https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions#included-storage-and-minutes>):
+### [Number of minutes and storage per GitHub plan](https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions#included-storage-and-minutes)
+
 If your account's usage surpasses these limits and you have set a spending limit above $0 USD, you will pay based on the base minute price specified above.
 | Product | Storage | Minutes included (per month) | [Plan price (USD)](<https://github.com/pricing>) |
 |:--------|:-------:|:-------------------:|:-------:|
@@ -28,6 +29,7 @@ If your account's usage surpasses these limits and you have set a spending limit
 | GitHub Enterprise Cloud | 50 GB | 50,000 | $21/user/month |
 
 ### [Minute multipliers per OS](https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions#minute-multipliers)
+
 | Operating system | Minute multiplier |
 |:----------------:|:-----------------:|
 | Linux | 1 |

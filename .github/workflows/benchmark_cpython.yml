@@ -8,24 +8,30 @@ jobs:
     strategy:
       matrix:
         include:
-          #- cores: "2"
-          #  os: ubuntu-2204
-          #  osname: ubuntu-2204
+          - cores: "2"
+            os: ubuntu-22.04
+            osname: ubuntu-22.04
+            runner-type: GitHub-Hosted
           - cores: "2"
             os: ubuntu-2204-2-cores-aws-xlarge
-            osname: ubuntu-2204
+            osname: ubuntu-22.04
+            runner-type: Self-Hosted AWS EC2 t2.large
           #- cores: "4"
           #  os: ubuntu-latest-4-cores
           - cores: "8"
             os: ubuntu-latest-8-cores
             osname: ubuntu-latest
+            runner-type: GitHub-Hosted
           #- cores: "16"
           #  os: ubuntu-latest-16-cores
+          #  runner-type: GitHub-Hosted
           #- cores: "32"
           #  os: ubuntu-latest-32-cores
+          #  runner-type: GitHub-Hosted
           #- cores: "64"
           #  os: ubuntu-latest-64-cores
-    name: "CPython - ${{ matrix.osname }} - ${{ matrix.cores}} cores"
+          #  runner-type: GitHub-Hosted
+    name: "CPython - ${{ matrix.osname }} - ${{ matrix.runner-type}} - ${{ matrix.cores}} cores"
     runs-on: ${{ matrix.os }}
     env:
       OPENSSL_VER: 1.1.1t
@@ -96,15 +102,20 @@ jobs:
         include:
           - cores: "2"
             os: windows-2022
+            runner-type: GitHub-Hosted
           #- cores: "8"
           #  os: windows-2022-8-cores
+          #  runner-type: GitHub-Hosted
           #- cores: "16"
           #  os: windows-2022-16-cores
+          #  runner-type: GitHub-Hosted
           #- cores: "32"
           #  os: windows-2022-32-cores
+          #  runner-type: GitHub-Hosted
           #- cores: "64"
           #  os: windows-2022-64-cores
-    name: "CPython - ${{ matrix.os }} - ${{ matrix.cores }} cores - x86 build"
+          #  runner-type: GitHub-Hosted
+    name: "CPython - ${{ matrix.os }} - ${{ matrix.runner-type }} - ${{ matrix.cores }} cores - x86 build"
     runs-on: ${{ matrix.os }}
     env:
       IncludeUwp: 'true'
@@ -131,15 +142,20 @@ jobs:
         include:
           - cores: "2"
             os: windows-2022
+            runner-type: GitHub-Hosted
           #- cores: "8"
           #  os: windows-2022-8-cores
+          #  runner-type: GitHub-Hosted
           #- cores: "16"
           #  os: windows-2022-16-cores
+          #  runner-type: GitHub-Hosted
           #- cores: "32"
           #  os: windows-2022-32-cores
+          #  runner-type: GitHub-Hosted
           #- cores: "64"
           #  os: windows-2022-64-cores
-    name: "CPython - ${{ matrix.os }} - ${{ matrix.cores }} cores - x64 build"
+          #  runner-type: GitHub-Hosted
+    name: "CPython - ${{ matrix.os }} - ${{ matrix.runner-type }} - ${{ matrix.cores }} cores - x64 build"
     runs-on: ${{ matrix.os }}
     env:
       IncludeUwp: 'true'
@@ -170,9 +186,11 @@ jobs:
   #      include:
   #        - cores: "3"
   #          os: macos-latest-3-cores
-  #        #- cores: "32"
-  #        #  os: macos-latest-32-cores
-  #  name: "CPython - ${{ matrix.os }} - ${{ matrix.cores }}"
+  #          runner-type: GitHub-Hosted
+  #        - cores: "32"
+  #          os: macos-latest-32-cores
+  #          runner-type: GitHub-Hosted
+  #  name: "CPython - ${{ matrix.os }} - ${{ matrix.runner-type }} - ${{ matrix.cores }}"
   #  runs-on: ${{ matrix.os }}
   #  env:
   #    HOMEBREW_NO_ANALYTICS: 1
