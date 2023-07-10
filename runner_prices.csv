@@ -1,5 +1,7 @@
 ci provider;runner os;runner name;runner cores;cost per minute (usd)
 GitHub;Linux;;2;0.008
+GitHub;Linux;Self-Hosted AWS EC2 t2.large OnDemand;2;0.00155
+GitHub;Linux;Self-Hosted AWS EC2 t2.large Paid Upfront;2;0.00089
 GitHub;Linux;;4;0.016
 GitHub;Linux;;8;0.032
 GitHub;Linux;;16;0.064
